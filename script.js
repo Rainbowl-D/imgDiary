@@ -4,6 +4,8 @@ const MOOD_DATA = {
         'sunny': { icon: 'wb_sunny', label: '맑음' },
         'cloudy': { icon: 'filter_drama', label: '흐림' },
         'rainy': { icon: 'umbrella', label: '비' },
+        'air': { icon: 'air', label: '바람' },
+        'electric': { icon: 'electric_bolt', label: '번개' },
         'snowy': { icon: 'ac_unit', label: '눈' }
     },
     "기분": {
@@ -11,15 +13,52 @@ const MOOD_DATA = {
         'neutral': { icon: 'sentiment_satisfied', label: '보통' },
         'sad': { icon: 'sentiment_very_dissatisfied', label: '우울' },
         'angry': { icon: 'mood_bad', label: '화남' },
-        'soso': { icon: 'sentiment_neutral', label: '정색' }
+        'soso': { icon: 'sentiment_neutral', label: '정색' },
+        'heart_broken': { icon: 'heart_broken', label: '마상' },
+        'thumb_up_alt': { icon: 'thumb_up_alt', label: '따봉' },
+        'thumb_down_alt': { icon: 'thumb_down_alt', label: '붐따' }
     },
     "활동": {
-        'study': { icon: 'menu_book', label: '공부' },
+        'study': { icon: 'menu_book', label: '공부,독서' },
         'work': { icon: 'laptop_mac', label: '업무' },
         'exercise': { icon: 'fitness_center', label: '운동' },
         'rest': { icon: 'bedtime', label: '휴식' },
         'eat': { icon: 'flatware', label: '식사' },
-        'draw': { icon: 'color_lens', label: '그림' }
+        'create': { icon: 'create', label: '글' },
+        'draw': { icon: 'color_lens', label: '그림' },
+        'shopping': { icon: 'shopping_basket', label: '쇼핑' },
+        'flight': { icon: 'flight', label: '여행' },
+        'videocam': { icon: 'videocam', label: '영화' },
+        'medicatio': { icon: 'medication_liquid', label: '병원' },
+        'cleaning': { icon: 'cleaning_services', label: '청소' },
+        'photo_camera': { icon: 'photo_camera', label: '사진' },
+        'sports_esports': { icon: 'sports_esports', label: '게임' },
+        'textsms': { icon: 'textsms', label: '채팅' }
+    },
+    "아이템": {
+        'star': { icon: 'grade', label: '별' },
+        'favorite': { icon: 'favorite', label: '하트' },
+        'audiotrack': { icon: 'audiotrack', label: '음표' },
+        'schedule': { icon: 'schedule', label: '시계' },
+        'mail': { icon: 'mark_as_unread', label: '메일(편지봉투)' },
+        'calculate': { icon: 'calculate', label: '계산기' },
+        'idea': { icon: 'emoji_objects', label: '아이디어' },
+        'home': { icon: 'home', label: '집' },
+        'coffee': { icon: 'coffee', label: '커피' },
+        'sports_bar': { icon: 'sports_bar', label: '맥주' },
+        'animal': { icon: 'pets', label: '동물' },
+        'emoji_events': { icon: 'emoji_events', label: '트로피' },
+        'pig': { icon: 'savings', label: '돼지저금통' },
+        'build': { icon: 'build', label: '공구' },
+        'smartphone': { icon: 'smartphone', label: '휴대폰' },
+        'battery_1_bar': { icon: 'battery_1_bar', label: '배터리_방전' },
+        'battery_full': { icon: 'battery_full', label: '배터리_완충' },
+        'book': { icon: 'book', label: '책' },
+        'rocket': { icon: 'rocket_launch', label: '로켓' },
+        'delete': { icon: 'delete', label: '쓰레기통' },
+        'luggage': { icon: 'luggage', label: '여행캐리어' },
+        'trending_up': { icon: 'trending_up', label: '상승곡선' },
+        'thermostat': { icon: 'thermostat', label: '온도계' }
     }
 };
 
@@ -34,7 +73,7 @@ function initMoodSelect() {
         for (const [key, info] of Object.entries(items)) {
             const opt = document.createElement('option');
             opt.value = key;
-            opt.innerText = info.icon;
+            opt.innerText = info.label;
             group.appendChild(opt);
         }
         select.appendChild(group);

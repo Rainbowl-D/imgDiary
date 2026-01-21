@@ -27,8 +27,7 @@
 <body>
 <button id="openEditor" class="mobile-open-btn" style="display: none;">편집</button>
 <div class="editor-panel" id="editorPanel">
-    <button class="toggle-editor" id="closeEditor">닫기 ✖</button>
-    <h2>일기 설정</h2>
+    <h2>그림 일기 작성</h2>
     <div class="input-group">
         <label>날짜 선택: <input type="date" id="dateInput"></label>
         <label>요일 (자동): <input type="text" id="dayInput" readonly></label>
@@ -55,6 +54,7 @@
         <label>도장 색상: <input type="color" id="stampColorInput" value="#e74c3c"></label>
     </div>
     <button id="saveImage" class="save-btn">그림일기 저장 (.PNG)</button>
+    <button class="toggle-editor" id="closeEditor">닫기 ✖</button>
 </div>
 
 <div id="cardArea">
@@ -68,9 +68,11 @@
 
         <div class="drawn-box">
             <div class="header-content">
-                <span id="displayDate">0000년 00월 00일</span>
-                <span id="displayDay">요일</span>
-                <span class="displayWriter">글쓴이:<span id="displayWriter"></span></span>
+                <div class="displayDateBox">
+                    <span id="displayDate">0000년 00월 00일</span> | 
+                    <span id="displayDay">요일</span>
+                </div>
+                <span class="displayWriter">글쓴이 | <span id="displayWriter"></span></span>
                 <span><span id="displayWeather"></span></span>
             </div>
         </div>
@@ -95,4 +97,5 @@
 <script src="script.js"></script>
 
 </body>
+
 </html>
