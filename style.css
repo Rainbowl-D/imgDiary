@@ -102,7 +102,7 @@ input[type="color"]{height: 50px;}
 #displayDate{min-width: 190px;}
 #displayDay{min-width: 65px;}
 .displayWriter{font-size: 20px;}
-#displayTitle{display: block; max-width: 455px; padding-right: 5px; height: auto; overflow: hidden;}
+#displayTitle{display: block; width: 455px; padding-right: 5px; height: auto; overflow: hidden;}
 
 #displayWeather{
     display: inline-flex;
@@ -301,5 +301,6 @@ input[type="color"]{height: 50px;}
         align-items: center;
         overflow-x: scroll;
     }
+
 
 }
