@@ -56,6 +56,9 @@ input[type="color"]{height: 50px;}
 
 .diary-card::after{
     content: "Design: @rainbowl__D";
+    display: inline-block;
+    width: 110px;
+    text-align: right;
     position: absolute;
     top: 15px; right: 35px;
     font-size: 10px;
@@ -99,7 +102,7 @@ input[type="color"]{height: 50px;}
 #displayDate{min-width: 190px;}
 #displayDay{min-width: 65px;}
 .displayWriter{font-size: 20px;}
-#displayTitle{display: block; max-width: 450px; height: auto; overflow: hidden;}
+#displayTitle{display: block; max-width: 455px; padding-right: 5px; height: auto; overflow: hidden;}
 
 #displayWeather{
     display: inline-flex;
