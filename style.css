@@ -16,6 +16,68 @@
     font-weight: 400;
     src: url(https://fonts.gstatic.com/s/materialicons/v142/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2');
   }
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraLight.woff2') format('woff2');
+    font-weight: 200;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-display: swap;
+}
 
 :root {
     --diary-bg: #ffffff;
@@ -29,7 +91,8 @@
 body { margin: 0; display: flex; flex-wrap: wrap; background: #e0e0e0; height: 100vh; }
 
 /* 에디터 패널 */
-.editor-panel {position: relative; width: 350px; padding: 20px; background: #fff; color: #333; overflow-y: auto; font-family: 'arial'; z-index: 10;}
+.editor-panel {position: relative; width: 350px; padding: 20px; background: #fff; color: #333; overflow-y: auto; font-family:'Pretendard', 'arial'; z-index: 10;}
+.editor-panel *,.darwSetting *{font-family:'Pretendard'}
 .input-group label { display: block; margin-bottom: 15px; font-size: 1rem; }
 .input-group input, .input-group textarea, .input-group select { 
     width: 100%; padding: 8px; border-radius: 4px; border: none; margin-top: 5px; 
@@ -98,6 +161,7 @@ input[type="color"]{height: 50px;}
 .drawTools > div button{
     padding: 10px;
     width: 50%;
+    font-size: 12px;
 }
 .darwSetting > .toggle-darw{
     position: absolute;
@@ -352,6 +416,11 @@ input[type="color"]{height: 50px;}
     border: none;
     font-weight: 700;
     font-size: 15px;
+    font-family: 'Pretendard';
+}
+.modal-header *,
+#saveImageMobile{
+    font-family: 'Pretendard';
 }
 .mobile-only-btn {
     background: #333;
@@ -463,6 +532,7 @@ input[type="color"]{height: 50px;}
         cursor: pointer;
         font-size: 1.1rem;
         margin-top: 10px;
+        font-family: 'Pretendard';
     }
     #closePreviewModal{
         border: none;
