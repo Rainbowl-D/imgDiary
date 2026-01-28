@@ -22,13 +22,14 @@
     --diary-text: #333333;
     --diary-line: #5c5c5c;
     --stamp-color: #e74c3c;
+    --cursor-color: #000;
 }
 
 * { font-family: 'IsYun', cursive; box-sizing: border-box; }
 body { margin: 0; display: flex; flex-wrap: wrap; background: #e0e0e0; height: 100vh; }
 
 /* 에디터 패널 */
-.editor-panel { width: 350px; padding: 20px; background: #fff; color: #333; overflow-y: auto; font-family: 'arial';}
+.editor-panel {position: relative; width: 350px; padding: 20px; background: #fff; color: #333; overflow-y: auto; font-family: 'arial'; z-index: 10;}
 .input-group label { display: block; margin-bottom: 15px; font-size: 1rem; }
 .input-group input, .input-group textarea, .input-group select { 
     width: 100%; padding: 8px; border-radius: 4px; border: none; margin-top: 5px; 
@@ -38,8 +39,80 @@ body { margin: 0; display: flex; flex-wrap: wrap; background: #e0e0e0; height: 1
 .colorSelect{display: flex; gap: 5px;}
 input[type="color"]{height: 50px;}
 
+.darwSetting{
+    position: absolute;
+    top: 40px;
+    left: 355px;
+    display: flex;
+    gap: 0;
+    flex-wrap: wrap;
+    align-items: center; 
+    width: 180px; height: auto;
+    padding: 10px;
+    border: 1px solid #000;
+    transform: translateX(-185px);
+    transition: all ease 0.2s;
+    z-index: 3;
+    background: #eee;
+}
+.darwSetting.active{
+    transform: translateX(0);
+}
+.darwSetting > div{
+    display: flex;
+    width: 100%;
+    gap:10px 0;
+    flex-wrap: wrap;
+    align-items: center; 
+}
+.darwSetting > strong{
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    text-align: center;
+    background: #000;
+    color: #fff;
+}
+.darwSetting label,
+.darwSetting input{
+    display: block;
+    width: 100%;
+}
+.darwSetting #penColorInput{
+    width: 100%;
+    height: 30px;
+}
+.drawTools{
+    width: 100%;
+}
+.drawTools #eraserBtn{
+    background: rgb(238, 238, 238);
+    color: rgb(51, 51, 51);
+}
+.drawTools > div {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+}
+.drawTools > div button{
+    padding: 10px;
+    width: 50%;
+}
+.darwSetting > .toggle-darw{
+    position: absolute;
+    display: block;
+    top: -1px;
+    right: -50px;
+    width: 50px;
+    height: 50px;
+    border: 1px solid #000;
+    background: #eee;
+    cursor: pointer;
+}
+
 /* 일기장 출력 영역 */
-#cardArea {width: calc(100% - 350px); min-width:700px; display: flex; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 40px; overflow: auto; }
+#cardArea {width: calc(100% - 350px); min-width:700px; display: flex; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding:40px 20px; overflow: auto; }
 
 /* 자글자글한 필터 정의 (글씨에는 안 먹히게 레이어 분리) */
 .hand-drawn { filter: url(#handDrawn); }
@@ -67,8 +140,8 @@ input[type="color"]{height: 50px;}
 
 /* 헤더, 그림, 제목 영역 */
 .drawn-box {
-    position: relative; /* 자식 absolute 기준점 */
-    border: none; /* 직접 테두리 제거 */
+    position: relative; 
+    border: none;
     margin-bottom: 15px;
     padding: 10px;
     background: transparent;
@@ -93,7 +166,7 @@ input[type="color"]{height: 50px;}
     align-items: center;
     gap: 5px;
     position: relative;
-    z-index: 2; /* 배경(1)보다 위로 */
+    z-index: 2; 
     filter: none !important;
 }
 
@@ -111,10 +184,10 @@ input[type="color"]{height: 50px;}
     width: 45px;
     height: 45px;
     background: var(--diary-bg);
-    border-radius: 50%; /* 동그란 스티커 */
-    box-shadow: 2px 2px 6px rgba(0,0,0,0.15); /* 부피감 있는 그림자 */
+    border-radius: 50%;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
     border: 3px solid var(--diary-line);
-    transform: rotate(8deg); /* 살짝 비틀기 */
+    transform: rotate(8deg);
     margin-left: 10px;
     vertical-align: middle;
     filter: url(#handDrawn) !important;
@@ -128,6 +201,7 @@ input[type="color"]{height: 50px;}
 
 
 .image-frame {
+    position: relative;
     width: 100%; 
     height: 350px;
     border: 2px solid var(--diary-line); /* 가상요소 대신 직접 테두리 */
@@ -140,10 +214,32 @@ input[type="color"]{height: 50px;}
     justify-content: center; 
     align-items: center;
     border-radius: 10px;
+    overflow: hidden;
 }
 .image-frame p {
     padding: 5px 10px;
     font-size: 28px;
+}
+.image-frame canvas{
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: none !important;
+}
+.brush-cursor {
+    position: absolute;
+    border: 1px solid #000;
+    border-radius: 50%;
+    pointer-events: none;
+    display: none; 
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: luminosity; 
+    background-color: var(--cursor-color, rgba(0, 0, 0, 1));
+    filter: none !important;
+}
+.brush-cursor.eraser{
+    background: #fff;
 }
 
 .title-area {margin-top: 10px; font-size: 26px; min-height: 50px; }
@@ -193,7 +289,7 @@ input[type="color"]{height: 50px;}
     border-radius: 50%;
     color: var(--stamp-color);
     text-align: center;
-    transform: rotate(-15deg); /* 도장 특유의 삐딱함 */
+    transform: rotate(-15deg);
     padding: 10px;
     box-shadow: inset 0 0 0 2px var(--stamp-color);
     background: rgba(255, 255, 255, 0.1);
@@ -237,62 +333,81 @@ input[type="color"]{height: 50px;}
     border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem;
 }
 
-/* --- 모바일 대응 및 토글 스타일 추가 --- */
-
-/* 에디터 닫기/열기 버튼 (상단 위치) */
-.toggle-editor {
-    display: none; /* 기본적으로는 숨김 */
+/* --- 모바일 대응 --- */
+.mobile-edit{
+    display: none;
     width: 100%;
-    padding: 5px;
-    background: #eee;
-    color: #333;
+    gap: 5px;
+    justify-content: center;
+    padding: 10px;
+}
+.mobile-edit > button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+    width: 100%;
+    border-radius: 5px;
+    color: white;
     border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin: 30px 0 10px;
-    font-weight: bold;
+    font-weight: 700;
+    font-size: 15px;
+}
+.mobile-only-btn {
+    background: #333;
 }
 
-/* 모바일 미디어 쿼리 (768px 이하) */
-@media (max-width: 768px) {
+.preview-btn {
+    background: #098d40;
+}
+.modal {
+    display: none; position: fixed; z-index: 3000;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(3px);
+}
 
-    /* 에디터 패널을 왼쪽으로 숨김 */
+.modal-content {
+    background: #fff; margin: 5% auto; padding: 20px 5px;
+    width: 90%; max-width: 650px; border-radius: 12px;
+}
+
+#previewImageArea img {
+    max-width: 100%; height: auto; border: 1px solid #ddd;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 1050px) and (min-width: 899px) {
+    .editor-panel{width: 200px;}
+    #cardArea{
+        width: calc(100% - 200px);
+        padding: 20px 10px;
+        justify-content: flex-end;
+    }
+    .darwSetting{
+        left: 200px;
+    }
+}
+
+@media (max-width: 899px) {
+    body{
+        width: 100%;
+        height: 100%;
+        overflow-y: hidden;
+    }
+
     .editor-panel {
         position: fixed;
-        left: -350px; /* 초기 위치: 숨김 */
-        top: 0;
+        top: 60px;
         bottom: 0;
+        width: 100%;
+        padding-bottom: 50px;
         z-index: 1000;
         transition: left 0.3s ease;
         box-shadow: 5px 0 15px rgba(0,0,0,0.1);
     }
+    #saveImage{display: none;}
 
-    /* 에디터가 열렸을 때 클래스 */
-    .editor-panel.active {
-        left: 0;
-    }
-
-    /* 모바일용 열기 버튼 */
-    .mobile-open-btn {
-        display: block;
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        z-index: 999;
-        background: #333;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        font-size: 12px;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-
-    .toggle-editor { display: block; } /* 패널 안의 닫기 버튼 표시 */
-
-    /* 일기장 출력 영역 최적화 */
+    /* 일기장 출력 (가려짐) */
     #cardArea {
         display: block;
         padding: 10px;
@@ -301,6 +416,78 @@ input[type="color"]{height: 50px;}
         align-items: center;
         overflow-x: scroll;
     }
+    #drawingCanvas {
+        cursor: none;
+    }
 
+    .darwSetting{
+        display: none;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        transform: translate(0, 337px);
+        z-index: 4000;
+    }
+    .darwSetting.active{
+        transform: translate(0,0);
+    }
+    .darwSetting > .toggle-darw{
+        top: -50px;
+        right: 0;
+    }
 
+    .mobile-edit{display: flex;}
+    .mobile-only-btn { display: block; }
+
+    #drawingModal.active{display: block;}
+    #drawingModal.active ~ .darwSetting{display: block;}
+
+     #previewModal .modal-content{
+        padding: 20px;
+        margin: auto;
+    }
+    
+    .drawing-content {
+        width: 100%; height: 100%; margin: 0; border-radius: 0;
+        display: flex; flex-direction: column;
+    }
+    #closeDrawingModal{
+        display: block;
+        width: 100%;
+        padding: 15px;
+        background: #333;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        margin-top: 10px;
+    }
+    #closePreviewModal{
+        border: none;
+        float: right;
+        font-size: 20px;
+    }
+    
+    #modalCanvasContainer {
+        width: 100%;
+        aspect-ratio: 584 / 346; 
+        max-height: 70vh;
+        margin-top: 10px;
+        position: relative;
+        background-color: #fff;
+        background-size: cover;
+        background-position: center;
+        border: 2px solid #333;
+        touch-action: none;
+    }
+
+    #modalCanvasContainer canvas {
+        width: 100% !important;
+        height: 100% !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
 }

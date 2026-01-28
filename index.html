@@ -25,74 +25,126 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<button id="openEditor" class="mobile-open-btn" style="display: none;">편집</button>
-<div class="editor-panel" id="editorPanel">
-    <h2>그림 일기 작성</h2>
-    <div class="input-group">
-        <label>날짜 선택: <input type="date" id="dateInput"></label>
-        <label>요일 (자동): <input type="text" id="dayInput" readonly></label>
-        <label>그림 첨부: <input type="file" id="imgInput" accept="image/*"></label>
-        <label>아이콘: 
-            <select id="moodSelect">
-            </select>
-        </label>
-        <label>글쓴이: <input type="text" id="writerInput" placeholder="글쓴이"></label>
-        <label>제목: <input type="text" id="titleInput" placeholder="제목"></label>
-        <label>내용: <textarea id="contentInput" rows="5" placeholder="내용을 쓰면 원고지에 반영됩니다."></textarea></label>
-        <div class="colorSelect">
-            <label>배경색: <input type="color" id="bgColorInput" value="#ffffff"></label>
-            <label>선 색상: <input type="color" id="lineColorInput" value="#5c5c5c"></label>
-            <label>글자색: <input type="color" id="textColorInput" value="#333333"></label>
-        </div>
-        <label>도장 표시: 
-            <select id="stampToggle">
-                <option value="none">표시 안 함</option>
-                <option value="show">표시함</option>
-            </select>
-        </label>
-        <label>도장 문구: <input type="text" id="stampTextInput" value="참 잘했어요" placeholder="예: 참 잘했어요"></label>
-        <label>도장 색상: <input type="color" id="stampColorInput" value="#e74c3c"></label>
+    <div class="mobile-edit">
+        <button type="button" id="openMobileCanvas" class="mobile-only-btn">🎨 모바일 그림 그리기</button>
+        <button type="button" id="showPreview" class="preview-btn">🔍 최종 이미지 미리보기</button>
     </div>
-    <button id="saveImage" class="save-btn">그림일기 저장 (.PNG)</button>
-    <button class="toggle-editor" id="closeEditor">닫기 ✖</button>
-</div>
 
-<div id="cardArea">
-    <div id="diaryContainer" class="diary-card">
-        <svg style="position: absolute; width: 0; height: 0;">
-            <filter id="handDrawn" x="-5%" y="-5%" width="110%" height="110%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
-                <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
-            </filter>
-        </svg>
+    <div class="editor-panel" id="editorPanel">
+        <h2>그림 일기 작성</h2>
+        <div class="input-group">
+            <label>날짜 선택: <input type="date" id="dateInput"></label>
+            <label>요일 (자동): <input type="text" id="dayInput" readonly></label>
+            <label>그림 첨부: <input type="file" id="imgInput" accept="image/*"></label>
 
-        <div class="drawn-box">
-            <div class="header-content">
-                <div class="displayDateBox">
-                    <span id="displayDate">0000년 00월 00일</span> | 
-                    <span id="displayDay">요일</span>
+            <label>아이콘: 
+                <select id="moodSelect">
+                </select>
+            </label>
+            <label>글쓴이: <input type="text" id="writerInput" placeholder="글쓴이"></label>
+            <label>제목: <input type="text" id="titleInput" placeholder="제목"></label>
+            <label>내용: <textarea id="contentInput" rows="5" placeholder="내용을 쓰면 원고지에 반영됩니다."></textarea></label>
+            <div class="colorSelect">
+                <label>배경색: <input type="color" id="bgColorInput" value="#ffffff"></label>
+                <label>선 색상: <input type="color" id="lineColorInput" value="#5c5c5c"></label>
+                <label>글자색: <input type="color" id="textColorInput" value="#333333"></label>
+            </div>
+            <label>도장 표시: 
+                <select id="stampToggle">
+                    <option value="none">표시 안 함</option>
+                    <option value="show">표시함</option>
+                </select>
+            </label>
+            <label>도장 문구: <input type="text" id="stampTextInput" value="참 잘했어요" placeholder="예: 참 잘했어요"></label>
+            <label>도장 색상: <input type="color" id="stampColorInput" value="#e74c3c"></label>
+        </div>
+        <button id="saveImage" class="save-btn">그림일기 저장 (.PNG)</button>
+    </div>
+
+    <div id="cardArea">
+        <div id="diaryContainer" class="diary-card">
+            <svg style="position: absolute; width: 0; height: 0;">
+                <filter id="handDrawn" x="-5%" y="-5%" width="110%" height="110%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
+                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" />
+                </filter>
+            </svg>
+
+            <div class="drawn-box">
+                <div class="header-content">
+                    <div class="displayDateBox">
+                        <span id="displayDate">0000년 00월 00일</span> | 
+                        <span id="displayDay">요일</span>
+                    </div>
+                    <span class="displayWriter">글쓴이 | <span id="displayWriter"></span></span>
+                    <span><span id="displayWeather"><span class="material-icons">wb_sunny</span></span></span>
                 </div>
-                <span class="displayWriter">글쓴이 | <span id="displayWriter"></span></span>
-                <span><span id="displayWeather"></span></span>
             </div>
-        </div>
 
-        <div id="imageFrame" class="image-frame">
-            <p style="filter:none;">그림을 업로드하세요</p>
-        </div>
+            <div id="imageFrame" class="image-frame">
+                <p id="guideText" style="filter:none; position: absolute; z-index: 1;">그림을 그리거나 업로드하세요</p>
+                <canvas id="drawingCanvas" style="position: relative; z-index: 2; cursor: crosshair;"></canvas>
+                <canvas id="topCanvas" style="position: absolute; z-index: 3; left:0; top:0; cursor: none;"></canvas>
+                <div id="brushCursor" class="brush-cursor"></div>
+            </div>
 
-        <div class="title-area drawn-box">
-            제 목 | <span id="displayTitle" style="filter:none;"></span>
-        </div>
+            <div class="title-area drawn-box">
+                제 목 | <span id="displayTitle" style="filter:none;"></span>
+            </div>
 
-        <div id="gridContent" class="grid-container"></div>
-        <div id="stampLayer" class="stamp-container" style="display: none;">
-            <div class="stamp-body">
-                <span id="stampText">참 잘했어요</span>
+            <div id="gridContent" class="grid-container"></div>
+            <div id="stampLayer" class="stamp-container" style="display: none;">
+                <div class="stamp-body">
+                    <span id="stampText">참 잘했어요</span>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <div id="drawingModal" class="modal">
+        <div class="modal-content drawing-content">
+            <div class="modal-header">
+                <span>그림 그리기 창</span>
+            </div>
+            <div id="modalCanvasContainer"></div>
+            <button id="closeDrawingModal">적용 후 닫기</button>
+        </div>
+    </div>
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>최종 결과물 미리보기</span>
+                <button id="closePreviewModal">X</button>
+            </div>
+            <div id="previewImageArea" style="text-align: center; margin: 15px 0;">
+                </div>
+           <button id="saveImageMobile" class="save-btn">그림일기 저장 (.PNG)</button>
+        </div>
+    </div>
+    <div class="darwSetting active" id="editorDarwSetting">
+        <strong>그림 도구</strong>
+        <div>
+            <label>브러쉬 색상 <input type="color" id="penColorInput" value="#333333"></label>
+            <label>
+                브러쉬 굵기 
+                <input type="number" min="1" max="50" value="5" name="penSize">
+                <input type="range" id="penSizeInput" name="penSize" min="1" max="50" value="5" >
+            </label>
+            <label>
+                투명도
+                <input type="number" min="1" max="100" value="100" name="penOpacity">
+                <input type="range" id="penOpacityInput" min="1" max="100" value="100" name="penOpacity">
+            </label>
+            <div class="drawTools">
+                <label>브러쉬 모드 <button type="button" id="eraserBtn">펜 모드</button></label>
+                <div>
+                    <button type="button" id="undoBtn">↩ 한 단계<br/>뒤로</button>
+                    <button type="button" id="clearCanvas">모두<br/>지우기</button>
+                </div>
+            </div>
+        </div>
+        <button class="toggle-darw" id="closeDarwSetting">📝</button>
+    </div>
 
 <script src="script.js"></script>
 

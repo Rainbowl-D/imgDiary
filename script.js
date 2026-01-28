@@ -80,7 +80,7 @@ function initMoodSelect() {
     }
 }
 
-// 1. 초기화 및 요일 자동 설정
+// 초기화 및 요일 자동 설정
 window.onload = () => {
     const now = new Date();
     $('dateInput').value = now.toISOString().substring(0, 10);
@@ -128,7 +128,7 @@ function updateDateAndDay() {
     }
 }
 
-// 2. 원고지 생성
+// 원고지 생성
 function renderGrid(text) {
     const container = $('gridContent');
     container.innerHTML = '';
@@ -167,7 +167,7 @@ function renderGrid(text) {
     }
 }
 
-// 3. 이미지 컬러 추출 로직
+// 이미지 컬러 추출 로직
 function rgbToHex(rgb) {
     const vals = rgb.match(/\d+/g);
     return "#" + vals.slice(0, 3).map(x => {
@@ -201,7 +201,7 @@ function applyTheme(src) {
     img.src = src;
 }
 
-// 4. 이벤트 바인딩
+// 이벤트 바인딩
 $('dateInput').onchange = updateDateAndDay;
 $('moodSelect').onchange = updateDateAndDay;
 $('titleInput').oninput = e => $('displayTitle').innerText = e.target.value;
@@ -217,9 +217,14 @@ $('imgInput').onchange = e => {
     if (file) {
         const reader = new FileReader();
         reader.onload = e => {
-            $('imageFrame').style.backgroundImage = `url(${e.target.result})`;
-            $('imageFrame').innerHTML = '';
-            applyTheme(e.target.result);
+            const imgUrl = e.target.result;
+            // 메인 프레임 배경 설정
+            $('imageFrame').style.backgroundImage = `url(${imgUrl})`;
+            // 모달 내 컨테이너 배경도 함께 설정 (이미 열려있을 경우 대비)
+            $('modalCanvasContainer').style.backgroundImage = `url(${imgUrl})`;
+            
+            $('guideText').style.display = 'none';
+            applyTheme(imgUrl);
         };
         reader.readAsDataURL(file);
     }
@@ -240,6 +245,299 @@ $('stampColorInput').oninput = (e) => {
     document.documentElement.style.setProperty('--stamp-color', e.target.value);
 };
 
+//브러쉬 굵기,투명도 input들 동기화
+function syncInputs(name, value) {
+    // 같은 name을 가진 모든 input 요소를 찾아 값을 맞춤
+    const targets = document.querySelectorAll(`input[name="${name}"]`);
+    targets.forEach(input => {
+        input.value = value;
+    });
+
+    // 값 변경 후 즉시 브러쉬 가이드(커서) 업데이트
+    if (name === 'penSize') {
+        const size = value;
+        brushCursor.style.width = `${size}px`;
+        brushCursor.style.height = `${size}px`;
+    } else if (name === 'penOpacity') {
+        const opacity = value / 100;
+        brushCursor.style.opacity = opacity;
+        // 필요하다면 화면에 표시되는 숫자 텍스트도 업데이트
+        if ($('opacityValue')) $('opacityValue').innerText = value;
+    }
+}
+
+// 모든 input 요소에 이벤트 리스너 등록
+document.querySelectorAll('input[name="penSize"], input[name="penOpacity"]').forEach(input => {
+    input.addEventListener('input', (e) => {
+        syncInputs(e.target.name, e.target.value);
+    });
+});
+
+//캔버스 그리기 이벤트
+const canvas = $('drawingCanvas');
+const ctx = canvas.getContext('2d');
+const topCanvas = $('topCanvas');
+const tCtx = topCanvas.getContext('2d');
+let isDrawing = false;
+let undoStack = [];
+const MAX_UNDO = 20;
+let isEraser = false;
+const brushCursor = $('brushCursor');
+
+//브러쉬 색상 업데이트
+$('penColorInput').oninput= (e) => document.documentElement.style.setProperty('--cursor-color', e.target.value);
+
+// 상태 저장 함수 (그리기가 끝날 때마다 호출)
+function saveState() {
+    // 현재 캔버스 상태를 이미지 데이터로 변환
+    const currentState = canvas.toDataURL();
+    
+    // 마지막 저장된 상태와 동일하면 중복 저장 방지
+    if (undoStack.length > 0 && undoStack[undoStack.length - 1] === currentState) return;
+
+    undoStack.push(currentState);
+    
+    // 최대 개수 초과 시 가장 오래된 기록 삭제
+    if (undoStack.length > MAX_UNDO) {
+        undoStack.shift();
+    }
+}
+
+// 캔버스 크기 초기화 함수
+function resizeCanvas() {
+    const rect = $('imageFrame').getBoundingClientRect();
+    [canvas, topCanvas].forEach(c => {
+        c.width = rect.width;
+        c.height = rect.height;
+    });
+    ctx.lineCap = ctx.lineJoin = 'round';
+    tCtx.lineCap = tCtx.lineJoin = 'round';
+}
+// 고정 해상도 정의
+const FIXED_WIDTH = 584;
+const FIXED_HEIGHT = 346;
+// 그리기 로직
+function getCoords(e) {
+    // topCanvas의 현재 화면상 실제 렌더링 크기(CSS 크기)를 가져옴
+    const rect = topCanvas.getBoundingClientRect(); 
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    
+    // 실제 해상도(584x346)와 화면 크기 사이의 비율 계산
+    const scaleX = FIXED_WIDTH / rect.width;
+    const scaleY = FIXED_HEIGHT / rect.height;
+    
+    // 비율을 곱해줌으로써 어느 크기의 화면에서 그려도 584x346 좌표로 변환됨
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    
+    return [x, y];
+}
+
+function startDrawing(e) {
+    $('guideText').style.display = 'none';
+
+    isDrawing = true;
+    const [x, y] = getCoords(e);
+    
+    const opacity = $('penOpacityInput').value / 100;
+    const color = $('penColorInput').value;
+    const size = $('penSizeInput').value;
+
+    if (isEraser) {
+        // 지우개는 메인 캔버스에서 직접 동작 (destination-out)
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.globalAlpha = 1.0;
+        ctx.lineWidth = size;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    } else {
+        // 일반 그릴 때는 임시 캔버스 사용
+        tCtx.clearRect(0, 0, topCanvas.width, topCanvas.height);
+        tCtx.globalAlpha = opacity;
+        tCtx.strokeStyle = color;
+        tCtx.lineWidth = size;
+        tCtx.beginPath();
+        tCtx.moveTo(x, y);
+    }
+}
+
+function draw(e) {
+   if (!isDrawing) return;
+    const [x, y] = getCoords(e);
+
+    if (isEraser) {
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    } else {
+        tCtx.lineTo(x, y);
+        tCtx.clearRect(0, 0, topCanvas.width, topCanvas.height); // 잔상 제거
+        tCtx.stroke();
+    }
+    updateBrushCursor(e);
+}
+
+function stopDrawing() {
+   if (isDrawing) {
+        if (!isEraser) {
+            // 임시 캔버스에 그려진 내용을 메인 캔버스에 합성
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1.0; // 이미 tCtx에 알파가 적용되어 있으므로 1.0으로 복사
+            ctx.drawImage(topCanvas, 0, 0);
+            tCtx.clearRect(0, 0, topCanvas.width, topCanvas.height);
+        }
+        saveState();
+        isDrawing = false;
+    }
+}
+
+// 이벤트 리스너 등록
+topCanvas.addEventListener('mousedown', startDrawing);
+topCanvas.addEventListener('mousemove', draw);
+window.addEventListener('mouseup', stopDrawing);
+
+topCanvas.addEventListener('touchstart', startDrawing);
+topCanvas.addEventListener('touchmove', draw);
+topCanvas.addEventListener('touchend', stopDrawing);
+
+// 가이드 크기 및 위치 업데이트 함수
+function updateBrushCursor(e) {
+    const size = $('penSizeInput').value;
+    const rect = topCanvas.getBoundingClientRect();
+    
+    // 캔버스 내에서의 상대 좌표 계산
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // 크기 업데이트
+    brushCursor.style.width = `${size}px`;
+    brushCursor.style.height = `${size}px`;
+    
+    // 위치 업데이트 (imageFrame이 relative이므로 absolute 좌표 사용)
+    brushCursor.style.left = `${x}px`;
+    brushCursor.style.top = `${y}px`;
+}
+
+// 캔버스 마우스 이벤트 리스너 추가
+topCanvas.addEventListener('mousemove', (e) => {
+    // PC 환경에서만 표시 (터치 이벤트 중에는 숨김 처리)
+    if (e.pointerType === 'touch') {
+        brushCursor.style.display = 'none';
+        return;
+    }
+    
+    brushCursor.style.display = 'block';
+    updateBrushCursor(e);
+});
+
+topCanvas.addEventListener('mouseleave', () => {
+    brushCursor.style.display = 'none';
+});
+
+topCanvas.addEventListener('mouseenter', (e) => {
+    // 마우스가 들어올 때 즉시 위치와 크기 반영
+    brushCursor.style.display = 'block';
+    updateBrushCursor(e);
+});
+
+// 슬라이더 조절 시에도 즉시 크기 반영을 위해 input 이벤트에 연결
+$('penSizeInput').addEventListener('input', () => {
+    const size = $('penSizeInput').value;
+    brushCursor.style.width = `${size}px`;
+    brushCursor.style.height = `${size}px`;
+});
+
+//투명도 반영
+$('penOpacityInput').oninput = (e) => {
+    const val = e.target.value;
+    $('opacityValue').innerText = val;
+    
+    // 커서 가이드에도 투명도 반영하여 미리보기 제공
+    if (brushCursor) {
+        brushCursor.style.opacity = val / 100;
+    }
+};
+
+// 뒤로 가기 (Undo) 함수
+function undo() {
+    if (undoStack.length <= 1) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        undoStack = [];
+        if (!$('imageFrame').style.backgroundImage) {
+            $('imageFrame').querySelector('p').style.display = 'block';
+        }
+        return;
+    }
+    
+    undoStack.pop(); 
+    const previousState = undoStack[undoStack.length - 1];
+    
+    const img = new Image();
+    img.src = previousState;
+    img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const currentAlpha = ctx.globalAlpha; // 현재 설정된 투명도 보관
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1.0; // 이미지를 다시 그릴 때는 완전 불투명하게 로드
+        ctx.drawImage(img, 0, 0);
+        ctx.globalAlpha = currentAlpha; // 브러쉬 투명도 복구
+    };
+}
+
+// 지우개 버튼 토글
+$('eraserBtn').onclick = (e) => {
+    isEraser = !isEraser;
+    if (isEraser) {
+        e.target.style.background = '#e74c3c';
+        e.target.style.color = '#fff';
+        e.target.innerText = '지우개 모드';
+        $('brushCursor').classList.add('eraser');
+    } else {
+        e.target.style.background = '#eee';
+        e.target.style.color = '#333';
+        e.target.innerText = '펜 모드';
+        $('brushCursor').classList.remove('eraser');
+    }
+};
+
+// 뒤로가기 버튼 이벤트
+$('undoBtn').onclick = undo;
+window.addEventListener('keydown', (e) => {
+    // Control + Z (Windows) 또는 Command + Z (Mac) 체크
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        // 입력창(input, textarea)에서 타이핑 중일 때는 실행되지 않도록 방지
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+
+        e.preventDefault(); // 브라우저 기본 undo 방지 (필요 시)
+        undo(); // 기존에 정의된 undo 함수 호출
+    }
+});
+
+//전체삭제 이벤트
+$('clearCanvas').onclick = () => {
+    const chkConfirm = confirm("지금까지 그려놓은 모든 내용이 지워집니다.");
+    if(chkConfirm){
+        saveState(); // 삭제 전 상태 저장
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if(!$('imageFrame').style.backgroundImage) {
+            $('imageFrame').querySelector('p').style.display = 'block';
+        }
+    }else{
+        return false;
+    }
+    
+};
+
+// 기존 window.onload에 resizeCanvas() 추가
+const originalOnload = window.onload;
+window.onload = () => {
+    originalOnload();
+    resizeCanvas();
+};
+
+// 이미지 캡쳐 저장
 $('saveImage').onclick = () => {
     const target = $('diaryContainer');
 
@@ -268,30 +566,151 @@ $('saveImage').onclick = () => {
     });
 };
 
-// --- 에디터 토글 로직 ---
-const editorPanel = $('editorPanel');
-const openBtn = $('openEditor');
-const closeBtn = $('closeEditor');
-
-// 에디터 열기
-openBtn.onclick = () => {
-    editorPanel.classList.add('active');
+//그림도구 여닫기
+$('closeDarwSetting').onclick = function() {
+    $('editorDarwSetting').classList.toggle('active');
 };
 
-// 에디터 닫기
-closeBtn.onclick = () => {
-    editorPanel.classList.remove('active');
+
+/* 모바일 제어 */
+
+// 모바일 그림 모달 열기/닫기
+const drawingModal = $('drawingModal');
+const canvasContainer = $('modalCanvasContainer');
+const originalFrame = $('imageFrame');
+
+$('openMobileCanvas').onclick = () => {
+    const container = $('modalCanvasContainer');
+    const mainFrame = $('imageFrame');
+    
+    // 캔버스 엘리먼트 이동
+    container.appendChild($('drawingCanvas'));
+    container.appendChild($('topCanvas'));
+    container.appendChild($('brushCursor'));
+    
+    // 배경 이미지 동기화
+    if (mainFrame.style.backgroundImage) {
+        container.style.backgroundImage = mainFrame.style.backgroundImage;
+        container.style.backgroundSize = "cover";
+        container.style.backgroundPosition = "center";
+    }
+    
+    $('drawingModal').classList.add('active'); // CSS 클래스로 제어
+
+    setTimeout(() => {
+        // 해상도 고정 (584x346)
+        canvas.width = FIXED_WIDTH;
+        canvas.height = FIXED_HEIGHT;
+        topCanvas.width = FIXED_WIDTH;
+        topCanvas.height = FIXED_HEIGHT;
+
+        ctx.lineCap = ctx.lineJoin = 'round';
+        tCtx.lineCap = tCtx.lineJoin = 'round';
+        
+        // 내용 복구
+        if (undoStack.length > 0) {
+            const img = new Image();
+            img.src = undoStack[undoStack.length - 1];
+            img.onload = () => ctx.drawImage(img, 0, 0, FIXED_WIDTH, FIXED_HEIGHT);
+        }
+    }, 50);
 };
 
-// 화면 크기 변화에 따라 열기 버튼 표시 여부 결정
-window.onresize = () => {
-    if (window.innerWidth <= 768) {
-        openBtn.style.display = 'block';
-    } else {
-        openBtn.style.display = 'none';
-        editorPanel.classList.remove('active'); // 데스크탑 복귀 시 패널 초기화
+$('closeDrawingModal').onclick = () => {
+    const frame = $('imageFrame');
+    frame.appendChild($('drawingCanvas'));
+    frame.appendChild($('topCanvas'));
+    frame.appendChild($('brushCursor'));
+    
+    $('drawingModal').classList.remove('active');
+
+    // 복귀 시 캔버스 내용 유지 확인
+    setTimeout(() => {
+        // 해상도 재확인
+        canvas.width = FIXED_WIDTH;
+        canvas.height = FIXED_HEIGHT;
+        if (undoStack.length > 0) {
+            const img = new Image();
+            img.src = undoStack[undoStack.length - 1];
+            img.onload = () => ctx.drawImage(img, 0, 0, FIXED_WIDTH, FIXED_HEIGHT);
+        }
+    }, 50);
+};
+
+let latestPreviewDataUrl = null;
+
+// 미리보기 생성 로직 (기존 저장 로직 복제 및 수정)
+$('showPreview').onclick = async () => {
+    const target = $('diaryContainer');
+    const originalWidth = target.style.width;
+    const originalTransform = target.style.transform;
+
+    // 캡처를 위한 스타일 고정
+    target.style.width = '650px';
+    target.style.transform = 'none';
+
+    // 가이드 요소 숨김
+    const topCanvas = $('topCanvas');
+    const brushCursor = $('brushCursor');
+    topCanvas.style.display = 'none';
+    brushCursor.style.display = 'none';
+
+    try {
+        await document.fonts.ready;
+        const dataUrl = await domtoimage.toPng(target, {
+            width: 650,
+            height: target.offsetHeight,
+            style: {
+                'transform': 'none',
+                'left': '0',
+                'top': '0'
+            }
+        });
+
+        // 생성된 데이터를 전역 변수에 저장
+        latestPreviewDataUrl = dataUrl;
+
+        // 미리보기 모달에 이미지 삽입
+        const img = new Image();
+        img.src = dataUrl;
+        $('previewImageArea').innerHTML = '';
+        $('previewImageArea').appendChild(img);
+        
+        // 미리보기 모달 표시
+        $('previewModal').style.display = 'flex';
+
+    } catch (error) {
+        console.error('미리보기 생성 실패:', error);
+        alert('이미지 생성 중 오류가 발생했습니다.');
+        latestPreviewDataUrl = null; // 실패 시 초기화
+    } finally {
+        // 원래 스타일 복구
+        target.style.width = originalWidth;
+        target.style.transform = originalTransform;
+        topCanvas.style.display = '';
+        brushCursor.style.display = '';
     }
 };
 
-// 초기 로드 시 체크
-if (window.innerWidth <= 768) openBtn.style.display = 'block';
+$('closePreviewModal').onclick = () => {
+    $('previewModal').style.display = 'none';
+    $('hiddenCaptureArea').innerHTML = '';
+};
+
+//모바일 이미지 저장
+$('saveImageMobile').onclick = () => {
+    // 미리보기가 성공적으로 생성되었는지 확인
+    if (!latestPreviewDataUrl) {
+        alert('미리보기가 아직 생성되지 않았거나 오류가 발생했습니다.');
+        return;
+    }
+
+    const link = document.createElement('a');
+    const dateVal = $('dateInput').value || 'diary';
+    
+    link.download = `diary-${dateVal}.png`;
+    link.href = latestPreviewDataUrl; // 미리 저장해둔 데이터 사용
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
